@@ -9,9 +9,15 @@ class A extends Thread{
     private boolean loop = true;
     @Override
     public void run() {
-        int count = 0;
+        //输入数字
         while (loop){
-            System.out.println(++count);
+            System.out.println((int)(Math.random()*100 + 1));
+        }
+        //休眠
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 }
