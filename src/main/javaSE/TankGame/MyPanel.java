@@ -6,7 +6,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Vector;
 
-public class MyPanel extends JPanel implements KeyListener {
+public class MyPanel extends JPanel implements KeyListener,Runnable{
     Hero hero = null;
     Vector<EnemyTank> enemyTanks = new Vector<>();//Vector 集合坦克
     int enemyTankSize = 3;
@@ -15,8 +15,16 @@ public class MyPanel extends JPanel implements KeyListener {
         hero.setSpeed(10);//改变我方坦克速度
 
         for (int i = 0; i < enemyTankSize; i++) {
+            //创建一个敌方坦克
             EnemyTank enemyTanks1 = new EnemyTank(100 * (i + 1), 0);
-            enemyTanks1.setDir(3);
+            //设置坦克默认方向
+            enemyTanks1.setDir(2);
+            //加入一颗子弹
+            Shot shot = new Shot(enemyTanks1.getX() + 20, enemyTanks1.getY() + 60, enemyTanks1.getDir());
+            enemyTanks1.shots.add(shot);
+            //启动 shot 对象
+            new Thread(shot).start();
+            //在 Vector 集合中添加敌方坦克
             enemyTanks.add(enemyTanks1);
         }
 
@@ -27,12 +35,32 @@ public class MyPanel extends JPanel implements KeyListener {
         super.paint(g);
         g.fillRect(0,0,1000,750);
 
-        //画出坦克
-        drawTank(hero.getX()+60,hero.getY(),g, hero.getDir(),  1);
+        //画出我方坦克
+        drawTank(hero.getX(),hero.getY(),g, hero.getDir(),  1);
+
+        //子弹
+        if (hero.shot != null && hero.shot.isLive == true){
+            g.draw3DRect(hero.shot.x,hero.shot.y,1,1,false);
+        }
+
         //敌方坦克,遍历 Vector
         for (int i = 0; i < enemyTanks.size() ; i++) {
             EnemyTank enemyTank = enemyTanks.get(i);
-            drawTank(enemyTank.getX(),enemyTank.getY(),g,enemyTank.getDir(),0);
+
+                drawTank(enemyTank.getX(),enemyTank.getY(),g,enemyTank.getDir(),0);
+                //画出子弹
+                for (int j = 0; j < enemyTank.shots.size(); j++) {
+                    //取出子弹
+                    Shot shot = enemyTank.shots.get(j);
+                    if (shot.isLive){
+                        g.draw3DRect(shot.x, shot.y, 1,1,false);
+                    }else {
+                        //从 Vector 移除
+                        enemyTank.shots.remove(shot);
+                    }
+                }
+
+
         }
 
     }
@@ -91,6 +119,30 @@ public class MyPanel extends JPanel implements KeyListener {
 
     }
 
+
+    //hitEnemy
+    // public void hitEnemy(Shot s,EnemyTank enemyTank){
+    //     switch (enemyTank.getDir()){
+    //         case 0:
+    //         case 1:
+    //             if (s.x > enemyTank.getX() && s.x < enemyTank.getX()+ 40
+    //                     && s.y > enemyTank.getY() && s.y < enemyTank.getY() + 60){
+    //                 s.isLive = false;
+    //                 enemyTank.isLive = false;
+    //             }
+    //             break;
+    //         case 2:
+    //         case 3:
+    //             if (s.x > enemyTank.getX() && s.x < enemyTank.getX()+ 60
+    //                     && s.y > enemyTank.getY() && s.y < enemyTank.getY() + 40){
+    //                 s.isLive = false;
+    //                 enemyTank.isLive = false;
+    //             }
+    //             break;
+    //     }
+    // }
+
+
     @Override
     public void keyTyped(KeyEvent e) {
 
@@ -100,6 +152,7 @@ public class MyPanel extends JPanel implements KeyListener {
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_W){
             hero.setDir(0);
+            // System.out.println("向上");
             hero.moveUp();
         }else if (e.getKeyCode() == KeyEvent.VK_S){
             hero.setDir(2);
@@ -111,11 +164,36 @@ public class MyPanel extends JPanel implements KeyListener {
             hero.setDir(1);
             hero.moveRight();
         }
+
+        if (e.getKeyCode() == KeyEvent.VK_J){
+
+            hero.Attack();
+        }
         repaint();
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
 
+    }
+
+    @Override
+    public void run() {
+        while (true){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            // //判断是否击中坦克
+            // if (hero.shot != null &&hero.shot.isLive){//如果我方坦克子弹还存活
+            //     //遍历敌方坦克，判断是否被击中
+            //     for (int i = 0; i < enemyTanks.size(); i++) {
+            //         hitEnemy(hero.shot,enemyTanks.get(i));
+            //     }
+            // }
+
+            this.repaint();
+        }
     }
 }
